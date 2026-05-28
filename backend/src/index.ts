@@ -31,6 +31,10 @@ const registry = new LobbyRegistry();
 
 type WebSocket = ServerWebSocket<Connection>;
 
+function log(event: string, fields: Record<string, unknown> = {}) {
+    console.log(JSON.stringify({ t: new Date().toISOString(), event, ...fields }));
+}
+
 const server = Bun.serve<Connection>({
     port: PORT,
     fetch(req, server) {
@@ -44,6 +48,7 @@ const server = Bun.serve<Connection>({
             if (ALLOWED_ORIGINS.length > 0) {
                 const origin = req.headers.get("origin");
                 if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+                    log("ws.upgrade.forbidden_origin", { origin });
                     return new Response("forbidden origin", { status: 403 });
                 }
             }
@@ -73,6 +78,7 @@ const server = Bun.serve<Connection>({
         maxPayloadLength: 64 * 1024,
         idleTimeout: 120, // seconds
         open(ws) {
+            log("ws.open", { playerId: ws.data.playerId });
             send(ws, {
                 type: "hello",
                 you: ws.data.playerId,
@@ -95,6 +101,7 @@ const server = Bun.serve<Connection>({
                 }
                 msg = parsed as Client2Server;
             } catch {
+                log("ws.msg.parse_error", { playerId: ws.data.playerId });
                 sendErr(
                     ws,
                     undefined,
@@ -103,17 +110,31 @@ const server = Bun.serve<Connection>({
                 );
                 return;
             }
+            if (msg.type !== "ping") {
+                log("ws.msg", {
+                    playerId: ws.data.playerId,
+                    type: msg.type,
+                    lobby: ws.data.lobbyCode,
+                });
+            }
             route(ws, msg);
         },
-        close(ws) {
+        close(ws, code, reason) {
+            log("ws.close", {
+                playerId: ws.data.playerId,
+                lobby: ws.data.lobbyCode,
+                code,
+                reason: reason || undefined,
+            });
             handleLeave(ws);
         },
     },
 });
 
-console.log(`tictactoe ws server listening on http://localhost:${server.port}`);
-console.log(`  - GET  /health`);
-console.log(`  - WS   /ws`);
+log("server.listen", {
+    port: server.port,
+    allowedOrigins: ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : "*",
+});
 
 // ---------------------------------------------------------------------------
 
@@ -205,6 +226,8 @@ function handleCreate(
     ws.data.lobbyCode = lobby.code;
     ws.data.name = name;
 
+    log("lobby.create", { code: lobby.code, host: ws.data.playerId, name });
+
     reply(ws, msg.msgId, {
         type: "lobby:joined",
         code: lobby.code,
@@ -259,6 +282,13 @@ function handleJoin(ws: WebSocket, msg: Client2ServerMessage<"lobby:join">) {
     ws.data.name = name;
     registry.cancelCleanup(lobby.code);
 
+    log("lobby.join", {
+        code: lobby.code,
+        player: ws.data.playerId,
+        name,
+        size: lobby.size,
+    });
+
     reply(ws, msg.msgId, {
         type: "lobby:joined",
         code: lobby.code,
@@ -305,6 +335,7 @@ function handleStart(ws: WebSocket, msg: Client2ServerMessage<"lobby:start">) {
     }
 
     const started = lobby.game!.start();
+    log("lobby.start", { code: lobby.code, players: lobby.players().length });
     const payload: Server2Client = {
         type: "game:started",
         turnOrder: lobby.players().map((p) => p.id),
