@@ -47,13 +47,13 @@ export class Game {
         this.board = new Board();
     }
 
-    onMouseDown(pos: V2) {
+    onMouseDown(_pos: V2) {
         this.isMouseDown = true;
         this.isDragging = false;
         this.dragBuf = v2(0, 0);
     }
 
-    onMouseUp(pos: V2) {
+    onMouseUp(_pos: V2) {
         if (!this.isDragging) {
             if (this.mode === "LocalMultiplayer") {
                 const state = this.localMulti!;
