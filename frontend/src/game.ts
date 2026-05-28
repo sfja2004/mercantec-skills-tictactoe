@@ -1,12 +1,18 @@
 import { Board } from "./board";
 import { Renderer } from "./renderer";
 import { v2, type V2 } from "./v2";
+import clickSoundMp3 from "./assets/click_sound.mp3";
+import gameoverSoundMp3 from "./assets/gameover_sound.mp3";
 
 export class Game {
     private offset = v2(0, 0);
     private isMouseDown = false;
     private isDragging = false;
-    private isBoardEnabled = false;
+    private dragBuf = v2(0, 0);
+
+    private mode: "Menu" | "LocalMultiplayer" = "Menu";
+
+    private localMulti: LocalMultiplayerState | null = null;
 
     private menu: Menu;
 
@@ -25,29 +31,56 @@ export class Game {
 
     startSingleplayer() {
         this.menu.hide();
-        this.isBoardEnabled = true;
     }
 
-    startLocalMultiplayer() {}
+    startLocalMultiplayer() {
+        this.menu.hide();
+        this.mode = "LocalMultiplayer";
+        this.localMulti = {
+            currentPlayer: "X",
+        };
+        this.offset = v2(0, 0);
+        this.board = new Board();
+    }
 
     onMouseDown(pos: V2) {
         this.isMouseDown = true;
         this.isDragging = false;
+        this.dragBuf = v2(0, 0);
     }
 
     onMouseUp(pos: V2) {
         if (!this.isDragging) {
-            this.board.click();
+            if (this.mode === "LocalMultiplayer") {
+                const state = this.localMulti!;
+
+                this.board.clickTile(state.currentPlayer);
+
+                if (this.board.winner()) {
+                    new Audio(gameoverSoundMp3).play();
+                    this.mode = "Menu";
+                    this.localMulti = null;
+                    this.menu.initLocalMultiplayerWin(this.board.winner()!);
+                    this.menu.show();
+                    this.board.setCursor(v2(-1, -1));
+                    return;
+                }
+
+                new Audio(clickSoundMp3).play();
+
+                state.currentPlayer = state.currentPlayer === "X" ? "O" : "X";
+            }
         }
         this.isMouseDown = false;
         this.isDragging = false;
     }
 
     onMouseMove(pos: V2, deltaPos: V2) {
-        if (this.isBoardEnabled) {
+        this.dragBuf = this.dragBuf.add(deltaPos);
+        if (this.mode !== "Menu") {
             this.board.setCursor(pos.sub(this.offset));
 
-            if (this.isMouseDown) {
+            if (this.isMouseDown && this.dragBuf.len() > 20) {
                 this.isDragging = true;
             }
             if (this.isDragging) {
@@ -60,8 +93,19 @@ export class Game {
         const r = new Renderer(this.canvas, this.offset);
         r.clear();
         this.board.render(r);
+        if (this.mode === "LocalMultiplayer") {
+            if (this.localMulti!.currentPlayer === "X") {
+                r.drawXTurnIndicator();
+            } else {
+                r.drawOTurnIndicator();
+            }
+        }
     }
 }
+
+type LocalMultiplayerState = {
+    currentPlayer: "X" | "O";
+};
 
 export class Menu {
     constructor(
@@ -103,6 +147,18 @@ export class Menu {
             .querySelector<HTMLButtonElement>("#button-connect-to-lobby")
             ?.addEventListener("click", () => {
                 throw new Error("not implemented");
+            });
+    }
+
+    initLocalMultiplayerWin(winnerKind: string) {
+        this.menuDiv.innerHTML = `
+            <h1>${winnerKind} has won!</h1>
+            <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
             });
     }
 }

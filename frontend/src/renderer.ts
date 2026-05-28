@@ -64,7 +64,7 @@ export class Renderer {
         const { cx } = this;
         pos = pos.add(this.offset);
 
-        cx.fillStyle = "#666";
+        cx.fillStyle = "#555";
         cx.fillRect(pos.x, pos.y, size.x, size.y);
         cx.fillStyle = "#e55050";
         const text = "X";
@@ -78,7 +78,7 @@ export class Renderer {
         const { cx } = this;
         pos = pos.add(this.offset);
 
-        cx.fillStyle = "#666";
+        cx.fillStyle = "#555";
         cx.fillRect(pos.x, pos.y, size.x, size.y);
         cx.fillStyle = "#5093e5";
         const text = "O";
@@ -86,5 +86,29 @@ export class Renderer {
         const width = cx.measureText(text).width;
         cx.font = `bold ${fontSize}px monospace`;
         cx.fillText(text, pos.x + size.x / 2 - width / 2, pos.y + fontSize - 6);
+    }
+
+    drawXTurnIndicator() {
+        const { cx } = this;
+
+        cx.fillStyle = "#e55050";
+        cx.font = `bold 48px monospace`;
+        cx.fillText("X", 100, 100);
+
+        cx.fillStyle = "#dcdcdc";
+        cx.font = `48px monospace`;
+        cx.fillText("'s turn", 125, 100);
+    }
+
+    drawOTurnIndicator() {
+        const { cx } = this;
+
+        cx.fillStyle = "#5093e5";
+        cx.font = `bold 48px monospace`;
+        cx.fillText("O", 100, 100);
+
+        cx.fillStyle = "#dcdcdc";
+        cx.font = `48px monospace`;
+        cx.fillText("'s turn", 125, 100);
     }
 }

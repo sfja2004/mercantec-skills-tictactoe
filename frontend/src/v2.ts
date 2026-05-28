@@ -22,6 +22,9 @@ export class V2 {
     round() {
         return new V2(Math.round(this.x), Math.round(this.y));
     }
+    len() {
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
+    }
 }
 
 export const v2 = (x: number, y: number = x): V2 => new V2(x, y);
