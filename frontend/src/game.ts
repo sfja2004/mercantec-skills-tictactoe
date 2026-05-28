@@ -10,7 +10,7 @@ export class Game {
     private isDragging = false;
     private dragBuf = v2(0, 0);
 
-    private mode: "Menu" | "LocalMultiplayer" = "Menu";
+    private mode: "Menu" | "Singleplayer" | "LocalMultiplayer" = "Menu";
 
     private localMulti: LocalMultiplayerState | null = null;
 
@@ -31,6 +31,9 @@ export class Game {
 
     startSingleplayer() {
         this.menu.hide();
+        this.mode = "Singleplayer";
+        this.offset = v2(0, 0);
+        this.board = new Board();
     }
 
     startLocalMultiplayer() {
@@ -54,21 +57,48 @@ export class Game {
             if (this.mode === "LocalMultiplayer") {
                 const state = this.localMulti!;
 
-                this.board.clickTile(state.currentPlayer);
+                if (this.board.clickTile(state.currentPlayer) === "placed") {
+                    if (this.board.winner()) {
+                        new Audio(gameoverSoundMp3).play();
+                        this.mode = "Menu";
+                        this.localMulti = null;
+                        this.menu.initLocalMultiplayerWin(this.board.winner()!);
+                        this.menu.show();
+                        this.board.setCursor(v2(-1, -1));
+                        return;
+                    }
+
+                    new Audio(clickSoundMp3).play();
+
+                    state.currentPlayer =
+                        state.currentPlayer === "X" ? "O" : "X";
+                }
+            } else if (this.mode === "Singleplayer") {
+                this.board.clickTile("X");
 
                 if (this.board.winner()) {
                     new Audio(gameoverSoundMp3).play();
                     this.mode = "Menu";
                     this.localMulti = null;
-                    this.menu.initLocalMultiplayerWin(this.board.winner()!);
+                    this.menu.initSingleplayerWin();
+                    this.menu.show();
+                    this.board.setCursor(v2(-1, -1));
+                    return;
+                }
+
+                this.board.makeAiPickATile("O");
+
+                if (this.board.winner()) {
+                    new Audio(gameoverSoundMp3).play();
+                    this.mode = "Menu";
+                    this.localMulti = null;
+                    this.menu.initSingleplayerLoss();
                     this.menu.show();
                     this.board.setCursor(v2(-1, -1));
                     return;
                 }
 
                 new Audio(clickSoundMp3).play();
-
-                state.currentPlayer = state.currentPlayer === "X" ? "O" : "X";
             }
         }
         this.isMouseDown = false;
@@ -153,6 +183,29 @@ export class Menu {
     initLocalMultiplayerWin(winnerKind: string) {
         this.menuDiv.innerHTML = `
             <h1>${winnerKind} has won!</h1>
+            <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+
+    initSingleplayerWin() {
+        this.menuDiv.innerHTML = `
+            <h1>You won!</h1>
+            <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+    initSingleplayerLoss() {
+        this.menuDiv.innerHTML = `
+            <h1>You lost!</h1>
             <button id="button-continue">Continue</button>
         `;
         document

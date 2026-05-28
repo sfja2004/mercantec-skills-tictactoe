@@ -10,6 +10,8 @@ export class Board {
 
     private kindThatHasWon: string | null = null;
 
+    private ai: Ai | null = null;
+
     constructor() {}
 
     render(r: Renderer) {
@@ -35,19 +37,25 @@ export class Board {
         this.cursor = pos;
     }
 
-    clickTile(kind: string) {
+    clickTile(kind: string): "placed" | "not placed" {
         const tp = this.pos2tile(this.cursor);
-        if (!this.map.hasTile(tp)) {
-            this.map.setTile(kind, tp);
-            if (this.checkWinAt(tp, kind)) {
-                this.kindThatHasWon = kind;
-            }
+        if (this.map.hasTile(tp)) return "not placed";
+        this.map.setTile(kind, tp);
+        if (this.checkWinAt(tp, kind)) {
+            this.kindThatHasWon = kind;
         }
+        return "placed";
     }
 
     winner(): string | null {
         return this.kindThatHasWon;
     }
+
+    initAi(personality: "easy" | "hard") {
+        this.ai = new Ai(personality);
+    }
+
+    makeAiPickATile(kind: string) {}
 
     private pos2tile(pos: V2): V2 {
         return pos.mul(tileSize.inv()).sub(v2(0.5)).round();
@@ -58,12 +66,75 @@ export class Board {
     }
 }
 
+class Ai {
+    private aiTurns: V2[] = [];
+    private playerTurns: V2[] = [];
+
+    constructor(private personality: "easy" | "hard") {}
+
+    addPlayerTurn(pos: V2) {
+        this.playerTurns.push(pos);
+    }
+
+    pickTile(kind: string, map: TileMap) {
+        const side =
+            this.personality === "easy" || Math.random() > 0.5 ? "ai" : "user";
+        if (side === "ai") {
+            this.pickTurnFromAi(kind, map);
+            return;
+        } else {
+        }
+    }
+
+    pickTurnFromAi(kind: string, map: TileMap) {
+        const offs = [
+            v2(-1, -1),
+            v2(-1, 0),
+            v2(-1, 1),
+            v2(0, -1),
+            v2(0, 1),
+            v2(1, -1),
+            v2(1, 0),
+            v2(1, 1),
+        ];
+        for (const pos of this.aiTurns.toReversed()) {
+            for (const off of offs) {
+                if (!map.hasTile(pos.add(off))) {
+                    map.setTile(kind, pos.add(off));
+                    this.aiTurns.push(pos.add(off));
+                    return;
+                }
+            }
+        }
+    }
+    pickTurnFromUser(kind: string, map: TileMap) {
+        const offs = [
+            v2(-1, -1),
+            v2(-1, 0),
+            v2(-1, 1),
+            v2(0, -1),
+            v2(0, 1),
+            v2(1, -1),
+            v2(1, 0),
+            v2(1, 1),
+        ];
+        for (const pos of this.aiTurns.toReversed()) {
+            for (const off of offs) {
+                if (!map.hasTile(pos.add(off))) {
+                    map.setTile(kind, pos.add(off));
+                    this.aiTurns.push(pos.add(off));
+                    return;
+                }
+            }
+        }
+    }
+}
+
 export class WinChecker {
     constructor(private map: TileMap) {}
 
     check(pos: V2, kind: string): boolean {
         const offs = [
-            v2(0, 0),
             v2(-1, -1),
             v2(-1, 0),
             v2(-1, 1),
@@ -78,6 +149,7 @@ export class WinChecker {
             [v2(-1, 0), v2(1, 0)],
             [v2(0, -1), v2(0, 1)],
             [v2(-1, -1), v2(1, 1)],
+            [v2(-1, 1), v2(1, -1)],
         ];
         for (const off of offs) {
             for (const [back, front] of shapes) {
