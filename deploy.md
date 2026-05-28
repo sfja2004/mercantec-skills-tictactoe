@@ -9,6 +9,14 @@ Build context is the repo root for both services because the frontend imports pr
 ## Build & run
 
 ```sh
+./up.sh
+```
+
+`up.sh` auto-detects the host's LAN IP (so the in-app join banner shows a shareable URL) and runs `docker compose up -d`. Re-run it whenever you change networks - it'll recreate the backend with the new IP.
+
+Raw compose still works if you want to skip the IP detection:
+
+```sh
 docker compose build
 docker compose up -d
 ```
