@@ -39,7 +39,10 @@ export class Board {
 
     clickTile(kind: string): "placed" | "not placed" {
         const tp = this.pos2tile(this.cursor);
-        if (this.map.hasTile(tp)) return "not placed";
+        if (this.map.hasTile(tp)) {
+            return "not placed";
+        }
+        this.ai?.addPlayerTurn(tp);
         this.map.setTile(kind, tp);
         if (this.checkWinAt(tp, kind)) {
             this.kindThatHasWon = kind;
@@ -55,7 +58,12 @@ export class Board {
         this.ai = new Ai(personality);
     }
 
-    makeAiPickATile(kind: string) {}
+    makeAiPickATile(kind: string) {
+        const pos = this.ai!.pickTile(kind, this.map);
+        if (this.checkWinAt(pos, kind)) {
+            this.kindThatHasWon = kind;
+        }
+    }
 
     private pos2tile(pos: V2): V2 {
         return pos.mul(tileSize.inv()).sub(v2(0.5)).round();
@@ -76,56 +84,77 @@ class Ai {
         this.playerTurns.push(pos);
     }
 
-    pickTile(kind: string, map: TileMap) {
+    pickTile(kind: string, map: TileMap): V2 {
         const side =
             this.personality === "easy" || Math.random() > 0.5 ? "ai" : "user";
         if (side === "ai") {
-            this.pickTurnFromAi(kind, map);
-            return;
+            return this.pickTurnFromAi(kind, map);
         } else {
+            return this.pickTurnFromUser(kind, map);
         }
     }
 
-    pickTurnFromAi(kind: string, map: TileMap) {
-        const offs = [
-            v2(-1, -1),
-            v2(-1, 0),
-            v2(-1, 1),
-            v2(0, -1),
-            v2(0, 1),
-            v2(1, -1),
-            v2(1, 0),
-            v2(1, 1),
-        ];
-        for (const pos of this.aiTurns.toReversed()) {
-            for (const off of offs) {
-                if (!map.hasTile(pos.add(off))) {
+    pickTurnFromAi(kind: string, map: TileMap): V2 {
+        let x = 1;
+        while (true) {
+            const offs = [
+                v2(-1 * x, -1 * x),
+                v2(-1 * x, 0 * x),
+                v2(-1 * x, 1 * x),
+                v2(0 * x, -1 * x),
+                v2(0 * x, 1 * x),
+                v2(1 * x, -1 * x),
+                v2(1 * x, 0 * x),
+                v2(1 * x, 1 * x),
+            ];
+            if (this.aiTurns.length === 0) {
+                return this.pickTurnFromUser(kind, map);
+            }
+            for (const _pos of this.aiTurns) {
+                const pos = this.aiTurns.at(
+                    Math.floor(Math.random() * this.aiTurns.length),
+                )!;
+                for (const off of offs) {
+                    if (map.hasTile(pos.add(off))) {
+                        continue;
+                    }
                     map.setTile(kind, pos.add(off));
                     this.aiTurns.push(pos.add(off));
-                    return;
+                    return pos.add(off);
                 }
             }
+            x += 1;
+            if (x > 4) throw new Error("grrr");
         }
     }
-    pickTurnFromUser(kind: string, map: TileMap) {
-        const offs = [
-            v2(-1, -1),
-            v2(-1, 0),
-            v2(-1, 1),
-            v2(0, -1),
-            v2(0, 1),
-            v2(1, -1),
-            v2(1, 0),
-            v2(1, 1),
-        ];
-        for (const pos of this.aiTurns.toReversed()) {
-            for (const off of offs) {
-                if (!map.hasTile(pos.add(off))) {
+    pickTurnFromUser(kind: string, map: TileMap): V2 {
+        let x = 1;
+        while (true) {
+            const offs = [
+                v2(-1 * x, -1 * x),
+                v2(-1 * x, 0 * x),
+                v2(-1 * x, 1 * x),
+                v2(0 * x, -1 * x),
+                v2(0 * x, 1 * x),
+                v2(1 * x, -1 * x),
+                v2(1 * x, 0 * x),
+                v2(1 * x, 1 * x),
+            ];
+            for (const _pos of this.playerTurns.toReversed()) {
+                const pos = this.playerTurns.at(
+                    Math.floor(Math.random() * this.playerTurns.length),
+                )!;
+                for (const off of offs) {
+                    if (map.hasTile(pos.add(off))) {
+                        continue;
+                    }
                     map.setTile(kind, pos.add(off));
                     this.aiTurns.push(pos.add(off));
-                    return;
+                    return pos.add(off);
                 }
             }
+            x += 1;
+            if (x > 4) throw new Error("grrr");
         }
     }
 }

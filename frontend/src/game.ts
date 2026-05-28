@@ -29,11 +29,12 @@ export class Game {
         this.menu.initMainMenu();
     }
 
-    startSingleplayer() {
+    startSingleplayer(personality: "easy" | "hard") {
         this.menu.hide();
         this.mode = "Singleplayer";
         this.offset = v2(0, 0);
         this.board = new Board();
+        this.board.initAi(personality);
     }
 
     startLocalMultiplayer() {
@@ -74,31 +75,31 @@ export class Game {
                         state.currentPlayer === "X" ? "O" : "X";
                 }
             } else if (this.mode === "Singleplayer") {
-                this.board.clickTile("X");
+                if (this.board.clickTile("X") === "placed") {
+                    if (this.board.winner()) {
+                        new Audio(gameoverSoundMp3).play();
+                        this.mode = "Menu";
+                        this.localMulti = null;
+                        this.menu.initSingleplayerWin();
+                        this.menu.show();
+                        this.board.setCursor(v2(-1, -1));
+                        return;
+                    }
 
-                if (this.board.winner()) {
-                    new Audio(gameoverSoundMp3).play();
-                    this.mode = "Menu";
-                    this.localMulti = null;
-                    this.menu.initSingleplayerWin();
-                    this.menu.show();
-                    this.board.setCursor(v2(-1, -1));
-                    return;
+                    this.board.makeAiPickATile("O");
+
+                    if (this.board.winner()) {
+                        new Audio(gameoverSoundMp3).play();
+                        this.mode = "Menu";
+                        this.localMulti = null;
+                        this.menu.initSingleplayerLoss();
+                        this.menu.show();
+                        this.board.setCursor(v2(-1, -1));
+                        return;
+                    }
+
+                    new Audio(clickSoundMp3).play();
                 }
-
-                this.board.makeAiPickATile("O");
-
-                if (this.board.winner()) {
-                    new Audio(gameoverSoundMp3).play();
-                    this.mode = "Menu";
-                    this.localMulti = null;
-                    this.menu.initSingleplayerLoss();
-                    this.menu.show();
-                    this.board.setCursor(v2(-1, -1));
-                    return;
-                }
-
-                new Audio(clickSoundMp3).play();
             }
         }
         this.isMouseDown = false;
@@ -153,15 +154,21 @@ export class Menu {
     initMainMenu() {
         this.menuDiv.innerHTML = `
             <h1>Infinity TicTacToe</h1>
-            <button id="button-start-singleplayer">Singleplayer against AI</button>
+            <button id="button-start-singleplayer-easy">Singleplayer (easy AI)</button>
+            <button id="button-start-singleplayer-hard">Singleplayer (hard AI)</button>
             <button id="button-start-local-multiplayer">Local 2 player</button>
             <button id="button-create-lobby">Create lobby</button>
             <button id="button-connect-to-lobby">Connect to lobby</button>
         `;
         document
-            .querySelector<HTMLButtonElement>("#button-start-singleplayer")
+            .querySelector<HTMLButtonElement>("#button-start-singleplayer-easy")
             ?.addEventListener("click", () => {
-                this.game.startSingleplayer();
+                this.game.startSingleplayer("easy");
+            });
+        document
+            .querySelector<HTMLButtonElement>("#button-start-singleplayer-hard")
+            ?.addEventListener("click", () => {
+                this.game.startSingleplayer("hard");
             });
         document
             .querySelector<HTMLButtonElement>("#button-start-local-multiplayer")
