@@ -44,6 +44,14 @@ const server = Bun.serve<Connection>({
             return new Response("ok", { status: 200 });
         }
 
+        if (url.pathname === "/lan-info") {
+            const ip = process.env.HOST_LAN_IP?.trim() || null;
+            return new Response(JSON.stringify({ ip }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        }
+
         if (url.pathname === "/ws") {
             if (ALLOWED_ORIGINS.length > 0) {
                 const origin = req.headers.get("origin");

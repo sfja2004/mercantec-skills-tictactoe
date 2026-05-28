@@ -1,9 +1,11 @@
 import { Game } from "./game";
+import { renderJoinBanner } from "./join-banner";
 import "./style.css";
 import { v2 } from "./v2";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;
 const menuDiv = document.querySelector<HTMLDivElement>("#menu")!;
+const joinBannerEl = document.querySelector<HTMLDivElement>("#join-banner")!;
 
 canvas.width = canvas.offsetWidth;
 canvas.height = canvas.offsetHeight;
@@ -30,3 +32,5 @@ const renderLoopFn = () => {
     requestAnimationFrame(renderLoopFn);
 };
 renderLoopFn();
+
+renderJoinBanner(joinBannerEl);

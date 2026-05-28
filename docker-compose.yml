@@ -7,6 +7,7 @@ services:
     environment:
       PORT: "9000"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+      HOST_LAN_IP: "${HOST_LAN_IP:-}"
     expose:
       - "9000"
     restart: unless-stopped
