@@ -35,6 +35,19 @@ export class Game {
         this.offset = v2(0, 0);
         this.board = new Board();
         this.board.initAi(personality);
+
+        setTimeout(() => {
+            if (this.mode !== "Singleplayer") {
+                return;
+            }
+            new Audio(gameoverSoundMp3).play();
+            this.mode = "Menu";
+            this.localMulti = null;
+            this.menu.initSingleplayerTie();
+            this.menu.show();
+            this.board.setCursor(v2(-1, -1));
+            return;
+        }, 30000);
     }
 
     startLocalMultiplayer() {
@@ -159,6 +172,7 @@ export class Menu {
             <button id="button-start-local-multiplayer">Local 2 player</button>
             <button id="button-create-lobby">Create lobby</button>
             <button id="button-connect-to-lobby">Connect to lobby</button>
+            <p>På Singleplayer er der en 30 sekunders timer</p>
         `;
         document
             .querySelector<HTMLButtonElement>("#button-start-singleplayer-easy")
@@ -213,6 +227,18 @@ export class Menu {
     initSingleplayerLoss() {
         this.menuDiv.innerHTML = `
             <h1>You lost!</h1>
+            <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+    initSingleplayerTie() {
+        this.menuDiv.innerHTML = `
+            <h1>You tied!</h1>
+            <p>Time (30s) ran out.</p>
             <button id="button-continue">Continue</button>
         `;
         document
