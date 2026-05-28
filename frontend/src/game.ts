@@ -10,6 +10,9 @@ export class Game {
     private isDragging = false;
     private dragBuf = v2(0, 0);
 
+    private xWins = 0;
+    private oWins = 0;
+
     private mode: "Menu" | "Singleplayer" | "LocalMultiplayer" = "Menu";
 
     private localMulti: LocalMultiplayerState | null = null;
@@ -77,6 +80,16 @@ export class Game {
                         this.mode = "Menu";
                         this.localMulti = null;
                         this.menu.initLocalMultiplayerWin(this.board.winner()!);
+                        if (this.board.winner()! === "X") {
+                            this.xWins += 1;
+                        } else {
+                            this.oWins += 1;
+                        }
+                        document.querySelector<HTMLDivElement>(
+                            "div#score",
+                        )!.innerHTML = `
+                            <h2>X: ${this.xWins}, O: ${this.oWins}</h2>
+                        `;
                         this.menu.show();
                         this.board.setCursor(v2(-1, -1));
                         return;
@@ -173,6 +186,7 @@ export class Menu {
             <button id="button-create-lobby">Create lobby</button>
             <button id="button-connect-to-lobby">Connect to lobby</button>
             <p>På Singleplayer er der en 30 sekunders timer</p>
+            <p>Score virker kun i Local 2 player</p>
         `;
         document
             .querySelector<HTMLButtonElement>("#button-start-singleplayer-easy")

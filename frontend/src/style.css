@@ -42,3 +42,8 @@ div#menu {
     font-size: 1.2rem;
   }
 }
+div#score {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+}
