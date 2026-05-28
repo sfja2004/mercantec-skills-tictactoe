@@ -227,7 +227,7 @@ export class Menu {
         document
             .querySelector<HTMLButtonElement>("#button-connect-to-lobby")
             ?.addEventListener("click", () => {
-                throw new Error("not implemented");
+                this.initConnect();
             });
     }
 
@@ -282,12 +282,40 @@ export class Menu {
 
     initLobby() {
         this.menuDiv.innerHTML = `
-            <h1>Lobby!</h1>
+            <h1>Lobby created</h1>
             <h2>Code: ${Math.floor(Math.random() * 10000)}</h2>
             <p>Waiting for users...</p>
+            <button id="button-start">Start</button>
+            <button id="button-back">Back</button>
         `;
         document
-            .querySelector<HTMLButtonElement>("#button-continue")
+            .querySelector<HTMLButtonElement>("#button-start")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+        document
+            .querySelector<HTMLButtonElement>("#button-back")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+
+    initConnect() {
+        this.menuDiv.innerHTML = `
+            <h1>Connect to lobby</h1>
+            <p>
+                <input type="text">
+            </p>
+            <button id="button-connect">Back</button>
+            <button id="button-back">Back</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-connect")
+            ?.addEventListener("click", () => {
+                console.log("could not connect")
+            });
+        document
+            .querySelector<HTMLButtonElement>("#button-back")
             ?.addEventListener("click", () => {
                 this.initMainMenu();
             });
