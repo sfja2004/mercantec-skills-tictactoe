@@ -222,7 +222,7 @@ export class Menu {
         document
             .querySelector<HTMLButtonElement>("#button-create-lobby")
             ?.addEventListener("click", () => {
-                throw new Error("not implemented");
+                this.initLobby();
             });
         document
             .querySelector<HTMLButtonElement>("#button-connect-to-lobby")
@@ -270,6 +270,21 @@ export class Menu {
             <h1>You tied!</h1>
             <p>Time (30s) ran out.</p>
             <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+
+
+
+    initLobby() {
+        this.menuDiv.innerHTML = `
+            <h1>Lobby!</h1>
+            <h2>Code: ${Math.floor(Math.random() * 4)}</h2>
+            <p>Waiting for users...</p>
         `;
         document
             .querySelector<HTMLButtonElement>("#button-continue")
