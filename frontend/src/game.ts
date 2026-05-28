@@ -32,6 +32,8 @@ export class Game {
         this.menu.initMainMenu();
     }
 
+    private spTimer = 0;
+
     startSingleplayer(personality: "easy" | "hard") {
         this.menu.hide();
         this.mode = "Singleplayer";
@@ -39,7 +41,7 @@ export class Game {
         this.board = new Board();
         this.board.initAi(personality);
 
-        setTimeout(() => {
+        this.spTimer = setTimeout(() => {
             if (this.mode !== "Singleplayer") {
                 return;
             }
@@ -102,6 +104,20 @@ export class Game {
                 }
             } else if (this.mode === "Singleplayer") {
                 if (this.board.clickTile("X") === "placed") {
+                    clearTimeout(this.spTimer);
+                    this.spTimer = setTimeout(() => {
+                        if (this.mode !== "Singleplayer") {
+                            return;
+                        }
+                        new Audio(gameoverSoundMp3).play();
+                        this.mode = "Menu";
+                        this.localMulti = null;
+                        this.menu.initSingleplayerTie();
+                        this.menu.show();
+                        this.board.setCursor(v2(-1, -1));
+                        return;
+                    }, 30000);
+
                     if (this.board.winner()) {
                         new Audio(gameoverSoundMp3).play();
                         this.mode = "Menu";
@@ -185,7 +201,7 @@ export class Menu {
             <button id="button-start-local-multiplayer">Local 2 player</button>
             <button id="button-create-lobby">Create lobby</button>
             <button id="button-connect-to-lobby">Connect to lobby</button>
-            <p>På Singleplayer er der en 30 sekunders timer</p>
+            <p>På Singleplayer er der en 30 sekunders timer (resetter hver tur.)</p>
             <p>Score virker kun i Local 2 player</p>
         `;
         document
