@@ -283,7 +283,7 @@ export class Menu {
     initLobby() {
         this.menuDiv.innerHTML = `
             <h1>Lobby!</h1>
-            <h2>Code: ${Math.floor(Math.random() * 4)}</h2>
+            <h2>Code: ${Math.floor(Math.random() * 10000)}</h2>
             <p>Waiting for users...</p>
         `;
         document
