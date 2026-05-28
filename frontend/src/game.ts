@@ -10,6 +10,9 @@ export class Game {
     private isDragging = false;
     private dragBuf = v2(0, 0);
 
+    private xWins = 0;
+    private oWins = 0;
+
     private mode: "Menu" | "Singleplayer" | "LocalMultiplayer" = "Menu";
 
     private localMulti: LocalMultiplayerState | null = null;
@@ -35,6 +38,19 @@ export class Game {
         this.offset = v2(0, 0);
         this.board = new Board();
         this.board.initAi(personality);
+
+        setTimeout(() => {
+            if (this.mode !== "Singleplayer") {
+                return;
+            }
+            new Audio(gameoverSoundMp3).play();
+            this.mode = "Menu";
+            this.localMulti = null;
+            this.menu.initSingleplayerTie();
+            this.menu.show();
+            this.board.setCursor(v2(-1, -1));
+            return;
+        }, 30000);
     }
 
     startLocalMultiplayer() {
@@ -47,13 +63,13 @@ export class Game {
         this.board = new Board();
     }
 
-    onMouseDown(pos: V2) {
+    onMouseDown(_pos: V2) {
         this.isMouseDown = true;
         this.isDragging = false;
         this.dragBuf = v2(0, 0);
     }
 
-    onMouseUp(pos: V2) {
+    onMouseUp(_pos: V2) {
         if (!this.isDragging) {
             if (this.mode === "LocalMultiplayer") {
                 const state = this.localMulti!;
@@ -64,6 +80,16 @@ export class Game {
                         this.mode = "Menu";
                         this.localMulti = null;
                         this.menu.initLocalMultiplayerWin(this.board.winner()!);
+                        if (this.board.winner()! === "X") {
+                            this.xWins += 1;
+                        } else {
+                            this.oWins += 1;
+                        }
+                        document.querySelector<HTMLDivElement>(
+                            "div#score",
+                        )!.innerHTML = `
+                            <h2>X: ${this.xWins}, O: ${this.oWins}</h2>
+                        `;
                         this.menu.show();
                         this.board.setCursor(v2(-1, -1));
                         return;
@@ -159,6 +185,8 @@ export class Menu {
             <button id="button-start-local-multiplayer">Local 2 player</button>
             <button id="button-create-lobby">Create lobby</button>
             <button id="button-connect-to-lobby">Connect to lobby</button>
+            <p>På Singleplayer er der en 30 sekunders timer</p>
+            <p>Score virker kun i Local 2 player</p>
         `;
         document
             .querySelector<HTMLButtonElement>("#button-start-singleplayer-easy")
@@ -213,6 +241,18 @@ export class Menu {
     initSingleplayerLoss() {
         this.menuDiv.innerHTML = `
             <h1>You lost!</h1>
+            <button id="button-continue">Continue</button>
+        `;
+        document
+            .querySelector<HTMLButtonElement>("#button-continue")
+            ?.addEventListener("click", () => {
+                this.initMainMenu();
+            });
+    }
+    initSingleplayerTie() {
+        this.menuDiv.innerHTML = `
+            <h1>You tied!</h1>
+            <p>Time (30s) ran out.</p>
             <button id="button-continue">Continue</button>
         `;
         document

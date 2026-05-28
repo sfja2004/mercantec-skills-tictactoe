@@ -153,7 +153,12 @@ class Ai {
                     return pos.add(off);
                 }
             }
+
+            // I den edge case at der ikke er felter omkring den valgte position, udvid søgeområdet.
+
             x += 1;
+
+            // Hvis området er blevet udvidet nok, kan vi regne med at vi er i en fejl-condition. Abort programmet.
             if (x > 4) throw new Error("grrr");
         }
     }
